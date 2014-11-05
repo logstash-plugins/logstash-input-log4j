@@ -20,11 +20,11 @@ Gem::Specification.new do |s|
   s.metadata = { "logstash_plugin" => "true", "group" => "input" }
 
   # Jar dependencies
-  s.requirements << "jar 'org.apache.logging.log4j:log4j', '2.0.2'"
+  s.requirements << "jar 'log4j:log4j', '1.2.17'"
 
   # Gem dependencies
   s.add_runtime_dependency 'logstash', '>= 1.4.0', '< 2.0.0'
+  s.add_runtime_dependency 'logstash-codec-plain'
   s.add_runtime_dependency 'jar-dependencies', ['~> 0.0.6']
-
 end
 
