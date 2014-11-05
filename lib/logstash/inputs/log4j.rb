@@ -6,7 +6,7 @@ require "logstash/namespace"
 require "logstash/util/socket_peer"
 require "socket"
 require "timeout"
-require 'logstash-input-log4j_jars.rb'
+require 'logstash-input-log4j_jars'
 
 # Read events over a TCP socket from a Log4j SocketAppender.
 #
