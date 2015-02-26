@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
 
   s.name            = 'logstash-input-log4j'
-  s.version         = '0.1.2'
+  s.version         = '0.1.3'
   s.licenses        = ['Apache License (2.0)']
   s.summary         = "Read events over a TCP socket from a Log4j SocketAppender"
   s.description     = "This gem is a logstash plugin required to be installed on top of the Logstash core pipeline using $LS_HOME/bin/plugin install gemname. This gem is not a stand-alone program"
@@ -35,7 +35,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'ruby-maven', '3.1.1.0.8'
   s.add_runtime_dependency "maven-tools", '1.0.7'
 
-  s.add_runtime_dependency 'logstash', '>= 1.4.0', '< 2.0.0'
+  s.add_runtime_dependency "logstash-core", '>= 1.4.0', '< 2.0.0'
   s.add_runtime_dependency 'logstash-codec-plain'
   s.add_runtime_dependency 'jar-dependencies'
   s.add_development_dependency 'logstash-devutils'
