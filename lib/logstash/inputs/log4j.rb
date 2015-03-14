@@ -59,41 +59,45 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     @logger.info("Log4j input")
   end # def register
 
+  public
+  def create_event(log4j_obj)
+    # NOTE: log4j_obj is org.apache.log4j.spi.LoggingEvent
+    event = LogStash::Event.new("message" => log4j_obj.getRenderedMessage)
+    event["path"] = log4j_obj.getLoggerName
+    event["priority"] = log4j_obj.getLevel.toString
+    event["logger_name"] = log4j_obj.getLoggerName
+    event["thread"] = log4j_obj.getThreadName
+    event["class"] = log4j_obj.getLocationInformation.getClassName
+    event["file"] = log4j_obj.getLocationInformation.getFileName + ":" + log4j_obj.getLocationInformation.getLineNumber
+    event["method"] = log4j_obj.getLocationInformation.getMethodName
+    event["NDC"] = log4j_obj.getNDC if log4j_obj.getNDC
+    event["stack_trace"] = log4j_obj.getThrowableStrRep.to_a.join("\n") if log4j_obj.getThrowableInformation
+
+    # Add the MDC context properties to event
+    if log4j_obj.getProperties
+      log4j_obj.getPropertyKeySet.each do |key|
+        event[key] = log4j_obj.getProperty(key)
+      end
+    end
+    return event
+  end # def create_event
+
   private
   def handle_socket(socket, output_queue)
     begin
       # JRubyObjectInputStream uses JRuby class path to find the class to de-serialize to
       ois = JRubyObjectInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
       loop do
-        # NOTE: log4j_obj is org.apache.log4j.spi.LoggingEvent
-        log4j_obj = ois.readObject
-        event = LogStash::Event.new("message" => log4j_obj.getRenderedMessage)
-        decorate(event)
+        event = create_event(ois.readObject)
         event["host"] = socket.peer
-        event["path"] = log4j_obj.getLoggerName
-        event["priority"] = log4j_obj.getLevel.toString
-        event["logger_name"] = log4j_obj.getLoggerName
-        event["thread"] = log4j_obj.getThreadName
-        event["class"] = log4j_obj.getLocationInformation.getClassName
-        event["file"] = log4j_obj.getLocationInformation.getFileName + ":" + log4j_obj.getLocationInformation.getLineNumber
-        event["method"] = log4j_obj.getLocationInformation.getMethodName
-        event["NDC"] = log4j_obj.getNDC if log4j_obj.getNDC
-        event["stack_trace"] = log4j_obj.getThrowableStrRep.to_a.join("\n") if log4j_obj.getThrowableInformation
-
-        # Add the MDC context properties to '@fields'
-        if log4j_obj.getProperties
-          log4j_obj.getPropertyKeySet.each do |key|
-            event[key] = log4j_obj.getProperty(key)
-          end
-        end
-
+        decorate(event)
         output_queue << event
       end # loop do
     rescue => e
-      @logger.debug("Closing connection", :client => socket.peer,
+      @logger.debug? && @logger.debug("Closing connection", :client => socket.peer,
                     :exception => e)
     rescue Timeout::Error
-      @logger.debug("Closing connection after read timeout",
+      @logger.debug? && @logger.debug("Closing connection after read timeout",
                     :client => socket.peer)
     end # begin
   ensure
@@ -118,13 +122,9 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   def run(output_queue)
     if server?
       loop do
-        # Start a new thread for each connection.
         Thread.start(@server_socket.accept) do |s|
-          # TODO(sissel): put this block in its own method.
-
-          # monkeypatch a 'peer' method onto the socket.
           s.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
-          @logger.debug("Accepted connection", :client => s.peer,
+          @logger.debug? && @logger.debug("Accepted connection", :client => s.peer,
                         :server => "#{@host}:#{@port}")
           handle_socket(s, output_queue)
         end # Thread.start
@@ -133,7 +133,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
       loop do
         client_socket = TCPSocket.new(@host, @port)
         client_socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
-        @logger.debug("Opened connection", :client => "#{client_socket.peer}")
+        @logger.debug? && @logger.debug("Opened connection", :client => "#{client_socket.peer}")
         handle_socket(client_socket, output_queue)
       end # loop
     end
