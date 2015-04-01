@@ -34,6 +34,7 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'jar-dependencies', '0.1.7'
   s.add_runtime_dependency 'ruby-maven', '3.1.1.0.8'
   s.add_runtime_dependency "maven-tools", '1.0.7'
+  s.add_runtime_dependency 'logstash-codec-plain'
 
   s.add_runtime_dependency "logstash-core", '>= 1.4.0', '< 2.0.0'
   s.add_development_dependency 'logstash-devutils'
