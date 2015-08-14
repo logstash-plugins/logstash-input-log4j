@@ -1,3 +1,5 @@
+vendor/
+lib/logstash-input-log4j_jars.rb
 *.gem
 Gemfile.lock
 .bundle
