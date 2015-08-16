@@ -14,6 +14,21 @@ require 'logstash-input-log4j_jars'
 # depending on `mode`. Depending on which `mode` is configured,
 # you need a matching SocketAppender or a SocketHubAppender
 # on the remote side.
+#
+# One event is created per received log4j LoggingEvent with the following schema:
+#
+# * `timestamp` => the number of milliseconds elapsed from 1/1/1970 until logging event was created.
+# * `path` => the name of the logger
+# * `priority` => the level of this event
+# * `logger_name` => the name of the logger
+# * `thread` => the thread name making the logging request
+# * `class` => the fully qualified class name of the caller making the logging request.
+# * `file` => the source file name and line number of the caller making the logging request in a colon-separated format "fileName:lineNumber".
+# * `method` => the method name of the caller making the logging request.
+# * `NDC` => the NDC string
+# * `stack_trace` => the multi-line stack-trace
+#
+# Also if the original log4j LoggingEvent contains MDC hash entries, they will be merged in the event as fields.
 class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   config_name "log4j"
