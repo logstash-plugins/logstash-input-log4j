@@ -63,6 +63,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   def create_event(log4j_obj)
     # NOTE: log4j_obj is org.apache.log4j.spi.LoggingEvent
     event = LogStash::Event.new("message" => log4j_obj.getRenderedMessage)
+    event["timestamp"] = log4j_obj.getTimeStamp
     event["path"] = log4j_obj.getLoggerName
     event["priority"] = log4j_obj.getLevel.toString
     event["logger_name"] = log4j_obj.getLoggerName

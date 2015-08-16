@@ -37,6 +37,7 @@ describe "inputs/log4j" do
 
     it "creates event with general information" do
       subject = input.create_event(log_obj)
+      expect(subject["timestamp"]).to eq(1426366971)
       expect(subject["path"]).to eq("org.apache.log4j.LayoutTest")
       expect(subject["priority"]).to eq("INFO")
       expect(subject["logger_name"]).to eq("org.apache.log4j.LayoutTest")
