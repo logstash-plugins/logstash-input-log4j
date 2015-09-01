@@ -40,9 +40,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     super(*args)
   end # def initialize
 
-  public
   def register
-#    LogStash::Environment.load_elasticsearch_jars!
     require "java"
     require "jruby/serialization"
 
@@ -59,7 +57,25 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     @logger.info("Log4j input")
   end # def register
 
-  public
+  def run(output_queue)
+    if server?
+      while !stop?
+        Thread.start(@server_socket.accept) do |s|
+          s.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+          @logger.debug? && @logger.debug("Accepted connection", :client => s.peer, :server => "#{@host}:#{@port}")
+          handle_socket(s, output_queue)
+        end # Thread.start
+      end # loop
+    else
+      while !stop?
+        client_socket = TCPSocket.new(@host, @port)
+        client_socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+        @logger.debug? && @logger.debug("Opened connection", :client => "#{client_socket.peer}")
+        handle_socket(client_socket, output_queue)
+      end # loop
+    end
+  end # def run
+
   def create_event(log4j_obj)
     # NOTE: log4j_obj is org.apache.log4j.spi.LoggingEvent
     event = LogStash::Event.new("message" => log4j_obj.getRenderedMessage)
@@ -82,12 +98,27 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     return event
   end # def create_event
 
+  # method used to stop the plugin and unblock
+  # pending blocking operatings like sockets and others.
+  def stop
+    super
+    @server_socket.close if @server_socket
+  end
   private
+
+  def server?
+    @mode == "server"
+  end # def server?
+
+  def readline(socket)
+    socket.readline
+  end # def readline
+
   def handle_socket(socket, output_queue)
     begin
       # JRubyObjectInputStream uses JRuby class path to find the class to de-serialize to
       ois = JRubyObjectInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
-      loop do
+      while !stop?
         event = create_event(ois.readObject)
         event["host"] = socket.peer
         decorate(event)
@@ -108,34 +139,4 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     end # begin
   end
 
-  private
-  def server?
-    @mode == "server"
-  end # def server?
-
-  private
-  def readline(socket)
-    line = socket.readline
-  end # def readline
-
-  public
-  def run(output_queue)
-    if server?
-      loop do
-        Thread.start(@server_socket.accept) do |s|
-          s.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
-          @logger.debug? && @logger.debug("Accepted connection", :client => s.peer,
-                        :server => "#{@host}:#{@port}")
-          handle_socket(s, output_queue)
-        end # Thread.start
-      end # loop
-    else
-      loop do
-        client_socket = TCPSocket.new(@host, @port)
-        client_socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
-        @logger.debug? && @logger.debug("Opened connection", :client => "#{client_socket.peer}")
-        handle_socket(client_socket, output_queue)
-      end # loop
-    end
-  end # def run
 end # class LogStash::Inputs::Log4j
