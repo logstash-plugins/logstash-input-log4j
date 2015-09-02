@@ -42,7 +42,6 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   public
   def register
-#    LogStash::Environment.load_elasticsearch_jars!
     require "java"
     require "jruby/serialization"
 
@@ -85,9 +84,8 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   private
   def handle_socket(socket, output_queue)
     begin
-      # JRubyObjectInputStream uses JRuby class path to find the class to de-serialize to
-      ois = JRubyObjectInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
-      loop do
+      ois = socket_to_inputstream(socket)
+      while !stop?
         event = create_event(ois.readObject)
         event["host"] = socket.peer
         decorate(event)
@@ -109,6 +107,12 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   end
 
   private
+  def socket_to_inputstream(socket)
+    # JRubyObjectInputStream uses JRuby class path to find the class to de-serialize to
+    JRubyObjectInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
+  end
+
+  private
   def server?
     @mode == "server"
   end # def server?
@@ -119,9 +123,17 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   end # def readline
 
   public
+  # method used to stop the plugin and unblock
+  # pending blocking operatings like sockets and others.
+  def stop
+    super
+    @server_socket.close if @server_socket && !@server_socket.closed?
+  end
+
+  public
   def run(output_queue)
     if server?
-      loop do
+      while !stop?
         Thread.start(@server_socket.accept) do |s|
           s.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
           @logger.debug? && @logger.debug("Accepted connection", :client => s.peer,
@@ -130,7 +142,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
         end # Thread.start
       end # loop
     else
-      loop do
+      while !stop?
         client_socket = TCPSocket.new(@host, @port)
         client_socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
         @logger.debug? && @logger.debug("Opened connection", :client => "#{client_socket.peer}")
