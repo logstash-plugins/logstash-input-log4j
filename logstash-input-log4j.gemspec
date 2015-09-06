@@ -11,13 +11,16 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   # Files
-  s.files = `git ls-files`.split($\)
+  s.files         = Dir.glob(["*.gemspec", "lib/**/*.rb", "spec/**/*.rb", "vendor/*"])
 
   # Tests
   s.test_files = s.files.grep(%r{^(test|spec|features)/})
 
   # Special flag to let us know this is actually a logstash plugin
   s.metadata = { "logstash_plugin" => "true", "logstash_group" => "input" }
+
+  s.requirements << "jar 'log4j:log4j', '1.2.17'"
+  s.add_runtime_dependency 'jar-dependencies'
 
   s.platform = 'java'
 
@@ -26,5 +29,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "logstash-core", '>= 1.4.0', '< 2.0.0'
 
   s.add_development_dependency 'logstash-devutils'
+
 end
 
