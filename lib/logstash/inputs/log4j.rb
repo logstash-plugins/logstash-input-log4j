@@ -126,7 +126,6 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   # method used to stop the plugin and unblock
   # pending blocking operatings like sockets and others.
   def stop
-    super
     @server_socket.close if @server_socket && !@server_socket.closed?
   end
 
