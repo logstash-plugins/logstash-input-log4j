@@ -3,7 +3,6 @@ require "logstash/devutils/rspec/spec_helper"
 require "logstash/inputs/log4j"
 require "logstash/plugin"
 
-Thread.abort_on_exception = true
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
