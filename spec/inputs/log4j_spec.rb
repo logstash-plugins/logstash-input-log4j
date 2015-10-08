@@ -3,27 +3,30 @@ require "logstash/devutils/rspec/spec_helper"
 require "logstash/inputs/log4j"
 require "logstash/plugin"
 
+Thread.abort_on_exception = true
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
     input = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
 
+
     # register will try to load jars and raise if it cannot find jars or if org.apache.log4j.spi.LoggingEvent class is not present
     expect {input.register}.to_not raise_error
   end
 
-  context "when interrupting the plugin" do
+  context "when interrupting the plugin in server mode" do
+    let(:config) { { "mode" =>  "server" } }
+    it_behaves_like "an interruptible input plugin"
+  end
 
-    it_behaves_like "an interruptible input plugin" do
-      let(:config) { { "mode" =>  "server" } }
-    end
-
+  context "when interrupting the plugin in client mode" do
     it_behaves_like "an interruptible input plugin" do
       let(:config) { { "mode" =>  "client" } }
       let(:socket) { double("socket") }
       let(:ois)    { double("ois") }
       before(:each) do
         allow(socket).to receive(:peer).and_return("localhost")
+        allow(socket).to receive(:close).and_return(true)
         allow(ois).to receive(:readObject).and_return({})
         allow(TCPSocket).to receive(:new).and_return(socket)
         expect(subject).to receive(:socket_to_inputstream).with(socket).and_return(ois)

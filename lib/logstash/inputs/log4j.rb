@@ -142,7 +142,10 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   # method used to stop the plugin and unblock
   # pending blocking operatings like sockets and others.
   def stop
-    @server_socket.close if @server_socket && !@server_socket.closed?
+    begin
+      @server_socket.close if @server_socket && !@server_socket.closed?
+    rescue IOError
+    end
   end
 
   public
@@ -164,5 +167,6 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
         handle_socket(client_socket, output_queue)
       end # loop
     end
+  rescue IOError
   end # def run
 end # class LogStash::Inputs::Log4j
