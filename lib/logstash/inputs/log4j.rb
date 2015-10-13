@@ -153,7 +153,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
     if server?
       while !stop?
         Thread.start(@server_socket.accept) do |s|
-          s.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+          add_socket_mixin(s)
           @logger.debug? && @logger.debug("Accepted connection", :client => s.peer,
                         :server => "#{@host}:#{@port}")
           handle_socket(s, output_queue)
@@ -161,12 +161,21 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
       end # loop
     else
       while !stop?
-        client_socket = TCPSocket.new(@host, @port)
-        client_socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+        client_socket = build_client_socket
         @logger.debug? && @logger.debug("Opened connection", :client => "#{client_socket.peer}")
         handle_socket(client_socket, output_queue)
       end # loop
     end
   rescue IOError
   end # def run
+
+  def build_client_socket
+    s = TCPSocket.new(@host, @port)
+    add_socket_mixin(s)
+    s
+  end
+
+  def add_socket_mixin(socket)
+    socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+  end
 end # class LogStash::Inputs::Log4j

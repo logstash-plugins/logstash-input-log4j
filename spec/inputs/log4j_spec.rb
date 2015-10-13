@@ -27,7 +27,7 @@ describe LogStash::Inputs::Log4j do
         allow(socket).to receive(:peer).and_return("localhost")
         allow(socket).to receive(:close).and_return(true)
         allow(ois).to receive(:readObject).and_return({})
-        allow(TCPSocket).to receive(:new).and_return(socket)
+        allow(subject).to receive(:build_client_socket).and_return(socket)
         expect(subject).to receive(:socket_to_inputstream).with(socket).and_return(ois)
         expect(subject).to receive(:create_event).and_return(LogStash::Event.new).at_least(:once)
       end
