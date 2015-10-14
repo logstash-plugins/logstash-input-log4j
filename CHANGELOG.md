@@ -1,3 +1,5 @@
+## 2.0.3
+ - Refactor code to improve test reliability
 ## 2.0.2
  - Fix tests with `Thread.abort_on_exception` turn on
 ## 2.0.0
