@@ -3,7 +3,7 @@
 [![Build
 Status](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Inputs/job/logstash-plugin-input-log4j-unit/badge/icon)](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Inputs/job/logstash-plugin-input-log4j-unit/)
 
-This is a plugin for [Logstash](https://github.com/elastic/logstash).
+This is a plugin for [Logstash](https://github.com/elastic/logstash) to allow it to receive events from the log4j Socket Appender. Note that it only works with log4j 1.x and not with version 2.
 
 It is fully free and fully open source. The license is Apache 2.0, meaning you are pretty much free to use it however you want in whatever way.
 
