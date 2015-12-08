@@ -8,7 +8,7 @@ require "socket"
 require "timeout"
 require 'logstash-input-log4j_jars'
 
-# Read events over a TCP socket from a Log4j SocketAppender.
+# Read events over a TCP socket from a Log4j SocketAppender. This plugin works only with log4j version 1.x.
 #
 # Can either accept connections from clients or connect to a server,
 # depending on `mode`. Depending on which `mode` is configured,
