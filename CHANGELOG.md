@@ -1,3 +1,7 @@
+## 2.0.5
+ - Fix a spec that was incompatible with the ng pipeline
+## 2.0.4
+ - Bump for LS 2.x compatibility
 ## 2.0.3
  - Refactor code to improve test reliability
 ## 2.0.2
