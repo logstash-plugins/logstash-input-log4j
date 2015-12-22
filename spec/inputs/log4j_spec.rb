@@ -64,7 +64,8 @@ describe LogStash::Inputs::Log4j do
       expect(subject["path"]).to eq("org.apache.log4j.LayoutTest")
       expect(subject["priority"]).to eq("INFO")
       expect(subject["logger_name"]).to eq("org.apache.log4j.LayoutTest")
-      expect(subject["thread"]).to eq("main")
+      expect(subject["thread"]).to be_a(String)
+      expect(subject["thread"]).not_to be_empty
       expect(subject["message"]).to eq("Hello, World")
       # checks locationInformation is collected, but testing exact values is not meaningful in jruby
       expect(subject["class"]).not_to be_empty
