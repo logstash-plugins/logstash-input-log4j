@@ -1,3 +1,5 @@
+# 2.0.6
+  - New dependency requirements for logstash-core for the 5.0 release
 ## 2.0.5
  - Fix a spec that was incompatible with the ng pipeline
 ## 2.0.4
