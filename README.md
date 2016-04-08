@@ -1,7 +1,6 @@
 # Logstash Plugin
 
-[![Build
-Status](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Inputs/job/logstash-plugin-input-log4j-unit/badge/icon)](http://build-eu-00.elastic.co/view/LS%20Plugins/view/LS%20Inputs/job/logstash-plugin-input-log4j-unit/)
+[![Travis Build Status](https://travis-ci.org/logstash-plugins/logstash-input-log4j.svg)](https://travis-ci.org/logstash-plugins/logstash-input-log4j)
 
 This is a plugin for [Logstash](https://github.com/elastic/logstash) to allow it to receive events from the log4j Socket Appender. Note that it only works with log4j 1.x and not with version 2.
 
