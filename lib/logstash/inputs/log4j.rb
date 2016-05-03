@@ -77,21 +77,21 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   def create_event(log4j_obj)
     # NOTE: log4j_obj is org.apache.log4j.spi.LoggingEvent
     event = LogStash::Event.new("message" => log4j_obj.getRenderedMessage)
-    event["timestamp"] = log4j_obj.getTimeStamp
-    event["path"] = log4j_obj.getLoggerName
-    event["priority"] = log4j_obj.getLevel.toString
-    event["logger_name"] = log4j_obj.getLoggerName
-    event["thread"] = log4j_obj.getThreadName
-    event["class"] = log4j_obj.getLocationInformation.getClassName
-    event["file"] = log4j_obj.getLocationInformation.getFileName + ":" + log4j_obj.getLocationInformation.getLineNumber
-    event["method"] = log4j_obj.getLocationInformation.getMethodName
-    event["NDC"] = log4j_obj.getNDC if log4j_obj.getNDC
-    event["stack_trace"] = log4j_obj.getThrowableStrRep.to_a.join("\n") if log4j_obj.getThrowableInformation
+    event.set("timestamp", log4j_obj.getTimeStamp)
+    event.set("path", log4j_obj.getLoggerName)
+    event.set("priority", log4j_obj.getLevel.toString)
+    event.set("logger_name", log4j_obj.getLoggerName)
+    event.set("thread", log4j_obj.getThreadName)
+    event.set("class", log4j_obj.getLocationInformation.getClassName)
+    event.set("file", log4j_obj.getLocationInformation.getFileName + ":" + log4j_obj.getLocationInformation.getLineNumber)
+    event.set("method", log4j_obj.getLocationInformation.getMethodName)
+    event.set("NDC", log4j_obj.getNDC) if log4j_obj.getNDC
+    event.set("stack_trace", log4j_obj.getThrowableStrRep.to_a.join("\n")) if log4j_obj.getThrowableInformation
 
     # Add the MDC context properties to event
     if log4j_obj.getProperties
       log4j_obj.getPropertyKeySet.each do |key|
-        event[key] = log4j_obj.getProperty(key)
+        event.set(key, log4j_obj.getProperty(key))
       end
     end
     return event
@@ -103,7 +103,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
       ois = socket_to_inputstream(socket)
       while !stop?
         event = create_event(ois.readObject)
-        event["host"] = socket.peer
+        event.set("host", socket.peer)
         decorate(event)
         output_queue << event
       end # loop do

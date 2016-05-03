@@ -60,28 +60,28 @@ describe LogStash::Inputs::Log4j do
 
     it "creates event with general information" do
       subject = input.create_event(log_obj)
-      expect(subject["timestamp"]).to eq(1426366971)
-      expect(subject["path"]).to eq("org.apache.log4j.LayoutTest")
-      expect(subject["priority"]).to eq("INFO")
-      expect(subject["logger_name"]).to eq("org.apache.log4j.LayoutTest")
-      expect(subject["thread"]).to be_a(String)
-      expect(subject["thread"]).not_to be_empty
-      expect(subject["message"]).to eq("Hello, World")
+      expect(subject.get("timestamp")).to eq(1426366971)
+      expect(subject.get("path")).to eq("org.apache.log4j.LayoutTest")
+      expect(subject.get("priority")).to eq("INFO")
+      expect(subject.get("logger_name")).to eq("org.apache.log4j.LayoutTest")
+      expect(subject.get("thread")).to be_a(String)
+      expect(subject.get("thread")).not_to be_empty
+      expect(subject.get("message")).to eq("Hello, World")
       # checks locationInformation is collected, but testing exact values is not meaningful in jruby
-      expect(subject["class"]).not_to be_empty
-      expect(subject["file"]).not_to be_empty
-      expect(subject["method"]).not_to be_empty
+      expect(subject.get("class")).not_to be_empty
+      expect(subject.get("file")).not_to be_empty
+      expect(subject.get("method")).not_to be_empty
     end
 
     it "creates event without stacktrace" do
       subject = input.create_event(log_obj)
-      expect(subject["stack_trace"]).to be_nil
+      expect(subject.get("stack_trace")).to be_nil
     end
 
     it "creates event with stacktrace" do
       subject = input.create_event(log_obj_with_stacktrace)
       #checks stack_trace is collected, exact value is too monstruous
-      expect(subject["stack_trace"]).not_to be_empty
+      expect(subject.get("stack_trace")).not_to be_empty
     end
   end
 end
