@@ -44,8 +44,8 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   # Read timeout in seconds. If a particular TCP connection is
   # idle for more than this timeout period, we will assume
   # it is dead and close it.
-  # If you never want to timeout, use -1.
-  config :data_timeout, :validate => :number, :default => 5
+  # If you never want to timeout, use -1.,
+  config :data_timeout, :validate => :number, :default => 5, :obsolete => "This option no longer necessary, the input will now keep the connection open."
 
   # Mode to operate in. `server` listens for client connections,
   # `client` connects to a server.
