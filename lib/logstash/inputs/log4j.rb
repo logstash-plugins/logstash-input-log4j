@@ -112,7 +112,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
         # PROXY proto clientip proxyip clientport proxyport
         if pp_info[0] != "PROXY"
           @logger.error("invalid proxy protocol header label", :hdr => pp_hdr)
-          raise IOError
+          return
         else
           # would be nice to log the proxy host and port data as well, but minimizing changes
           peer = pp_info[2]
