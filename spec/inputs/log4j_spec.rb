@@ -5,6 +5,7 @@ require "logstash/inputs/log4j"
 require "logstash/plugin"
 require "stud/try"
 require "stud/task"
+require 'timeout'
 
 describe LogStash::Inputs::Log4j do
 
@@ -108,13 +109,15 @@ describe LogStash::Inputs::Log4j do
 
         p "before socket"
         socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
-        data = File.read("testdata/log4j.capture")
+        data = File.binread("testdata/log4j.capture")
         socket.puts(data)
         socket.flush
         socket.close
 
-        #p "before collect"
-        #1.times.collect { queue.pop }
+        p "before collect"
+        static = Timeout::timeout(5) {
+          1.times.collect { queue.pop }
+        }
       end
       p "after pipeline"
 
