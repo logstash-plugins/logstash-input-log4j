@@ -91,35 +91,35 @@ describe LogStash::Inputs::Log4j do
 	it "should instantiate with port and let us send content" do
       p "starting my test"
       port = rand(1024..65535)
-      event_counts = 5
+
       conf = <<-CONFIG
         input {
           log4j {
+            mode => "server"
             port => #{port}
           }
         }
       CONFIG
+      p conf
 
+      p "before pipeline"
       events = input(conf) do |pipeline, queue|
-        p "in pipeline"
-        event_counts.times do |i|
-          p "in event count loop"
-          socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
-          p "in event count loop after socket"
-          data = File.read("testdata/log4j.capture")
-		  p data
-          socket.puts(data)
-          socket.flush
-          socket.close
-        end
 
-        p "collect"
-        event_counts.times.collect { queue.pop }
+        p "before socket"
+        socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
+        data = File.read("testdata/log4j.capture")
+        socket.puts(data)
+        socket.flush
+        socket.close
+
+        p "before collect"
+        1.times.collect { queue.pop }
       end
+      p "after pipeline"
 
       p "after loop"
-      insist { events.length } == event_counts 
-      insist { events[0].get("message") } == "whatever"
+      insist { events.length } == 1 
+      insist { events[0].get("logger_name") } == "sender"
     end
   end
 end
