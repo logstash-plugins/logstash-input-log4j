@@ -1,16 +1,20 @@
 # encoding: utf-8
 require "logstash/devutils/rspec/spec_helper"
+require "socket"
 require "logstash/inputs/log4j"
 require "logstash/plugin"
+require "stud/try"
+require "stud/task"
+require 'timeout'
 
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
-    input = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
+    plugin = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
 
 
     # register will try to load jars and raise if it cannot find jars or if org.apache.log4j.spi.LoggingEvent class is not present
-    expect {input.register}.to_not raise_error
+    expect {plugin.register}.to_not raise_error
   end
 
   context "when interrupting the plugin in server mode" do
@@ -35,7 +39,7 @@ describe LogStash::Inputs::Log4j do
   end
 
   context "reading general information from a org.apache.log4j.spi.LoggingEvent" do
-    let (:input) { LogStash::Plugin.lookup("input", "log4j").new("mode" => "client") }
+    let (:plugin) { LogStash::Plugin.lookup("input", "log4j").new("mode" => "client") }
     let (:log_obj) {
       org.apache.log4j.spi.LoggingEvent.new(
         "org.apache.log4j.Logger",
@@ -59,7 +63,7 @@ describe LogStash::Inputs::Log4j do
     }
 
     it "creates event with general information" do
-      subject = input.create_event(log_obj)
+      subject = plugin.create_event(log_obj)
       expect(subject.get("timestamp")).to eq(1426366971)
       expect(subject.get("path")).to eq("org.apache.log4j.LayoutTest")
       expect(subject.get("priority")).to eq("INFO")
@@ -74,14 +78,52 @@ describe LogStash::Inputs::Log4j do
     end
 
     it "creates event without stacktrace" do
-      subject = input.create_event(log_obj)
+      subject = plugin.create_event(log_obj)
       expect(subject.get("stack_trace")).to be_nil
     end
 
     it "creates event with stacktrace" do
-      subject = input.create_event(log_obj_with_stacktrace)
+      subject = plugin.create_event(log_obj_with_stacktrace)
       #checks stack_trace is collected, exact value is too monstruous
       expect(subject.get("stack_trace")).not_to be_empty
+    end
+  end
+
+  context "full socket tests" do
+	it "should instantiate with port and let us send content" do
+      p "starting my test"
+      port = rand(1024..65535)
+
+      conf = <<-CONFIG
+        input {
+          log4j {
+            mode => "server"
+            port => #{port}
+          }
+        }
+      CONFIG
+      p conf
+
+      p "before pipeline"
+      events = input(conf) do |pipeline, queue|
+
+        p "before socket"
+        socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
+        data = File.binread("testdata/log4j.capture")
+        socket.puts(data)
+        socket.flush
+        socket.close
+
+        p "before collect"
+        static = Timeout::timeout(5) {
+          1.times.collect { queue.pop }
+        }
+      end
+      p "after pipeline"
+
+      p "after loop"
+      insist { events.length } == 1 
+      insist { events[0].get("logger_name") } == "sender"
     end
   end
 end

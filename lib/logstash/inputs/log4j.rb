@@ -41,6 +41,10 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   # When mode is `client`, the port to connect to.
   config :port, :validate => :number, :default => 4560
 
+  # Proxy protocol support, only v1 is supported at this time
+  # http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
+  config :proxy_protocol, :validate => :boolean, :default => false
+
   # Read timeout in seconds. If a particular TCP connection is
   # idle for more than this timeout period, we will assume
   # it is dead and close it.
@@ -100,10 +104,25 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
   private
   def handle_socket(socket, output_queue)
     begin
+      peer = socket.peer
+      if @proxy_protocol
+        pp_hdr = socket.readline
+        pp_info = pp_hdr.split(/\s/)
+
+        # PROXY proto clientip proxyip clientport proxyport
+        if pp_info[0] != "PROXY"
+          @logger.error("invalid proxy protocol header label", :hdr => pp_hdr)
+          return
+        else
+          # would be nice to log the proxy host and port data as well, but minimizing changes
+          peer = pp_info[2]
+        end
+      end
       ois = socket_to_inputstream(socket)
+
       while !stop?
         event = create_event(ois.readObject)
-        event.set("host", socket.peer)
+        event.set("host", peer)
         decorate(event)
         output_queue << event
       end # loop do
