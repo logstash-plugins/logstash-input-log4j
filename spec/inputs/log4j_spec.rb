@@ -1,16 +1,19 @@
 # encoding: utf-8
 require "logstash/devutils/rspec/spec_helper"
+require "socket"
 require "logstash/inputs/log4j"
 require "logstash/plugin"
+require "stud/try"
+require "stud/task"
 
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
-    input = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
+    plugin = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
 
 
     # register will try to load jars and raise if it cannot find jars or if org.apache.log4j.spi.LoggingEvent class is not present
-    expect {input.register}.to_not raise_error
+    expect {plugin.register}.to_not raise_error
   end
 
   context "when interrupting the plugin in server mode" do
@@ -35,7 +38,7 @@ describe LogStash::Inputs::Log4j do
   end
 
   context "reading general information from a org.apache.log4j.spi.LoggingEvent" do
-    let (:input) { LogStash::Plugin.lookup("input", "log4j").new("mode" => "client") }
+    let (:plugin) { LogStash::Plugin.lookup("input", "log4j").new("mode" => "client") }
     let (:log_obj) {
       org.apache.log4j.spi.LoggingEvent.new(
         "org.apache.log4j.Logger",
@@ -59,7 +62,7 @@ describe LogStash::Inputs::Log4j do
     }
 
     it "creates event with general information" do
-      subject = input.create_event(log_obj)
+      subject = plugin.create_event(log_obj)
       expect(subject.get("timestamp")).to eq(1426366971)
       expect(subject.get("path")).to eq("org.apache.log4j.LayoutTest")
       expect(subject.get("priority")).to eq("INFO")
@@ -74,14 +77,49 @@ describe LogStash::Inputs::Log4j do
     end
 
     it "creates event without stacktrace" do
-      subject = input.create_event(log_obj)
+      subject = plugin.create_event(log_obj)
       expect(subject.get("stack_trace")).to be_nil
     end
 
     it "creates event with stacktrace" do
-      subject = input.create_event(log_obj_with_stacktrace)
+      subject = plugin.create_event(log_obj_with_stacktrace)
       #checks stack_trace is collected, exact value is too monstruous
       expect(subject.get("stack_trace")).not_to be_empty
+    end
+
+
+	it "should instantiate with port and let us send content" do
+      p "starting my test"
+      port = rand(1024..65535)
+      event_counts = 5
+      conf = <<-CONFIG
+        input {
+          log4j {
+            port => #{port}
+          }
+        }
+      CONFIG
+
+      events = input(conf) do |pipeline, queue|
+        p "in pipeline"
+        event_counts.times do |i|
+          p "in event count loop"
+          socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
+          p "in event count loop after socket"
+          data = File.read("testdata/log4j.capture")
+		  p data
+          socket.puts(data)
+          socket.flush
+          socket.close
+        end
+
+        p "collect"
+        event_counts.times.collect { queue.pop }
+      end
+
+      p "after loop"
+      insist { events.length } == event_counts 
+      insist { events[0].get("message") } == "whatever"
     end
   end
 end
