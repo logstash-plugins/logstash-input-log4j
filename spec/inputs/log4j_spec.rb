@@ -6,12 +6,12 @@ require "logstash/plugin"
 require "stud/try"
 require "stud/task"
 require 'timeout'
+require "flores/random"
 
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
     plugin = LogStash::Plugin.lookup("input", "log4j").new("mode" => "client")
-
 
     # register will try to load jars and raise if it cannot find jars or if org.apache.log4j.spi.LoggingEvent class is not present
     expect {plugin.register}.to_not raise_error
@@ -89,41 +89,92 @@ describe LogStash::Inputs::Log4j do
     end
   end
 
-  context "full socket tests" do
-	it "should instantiate with port and let us send content" do
-      p "starting my test"
-      port = rand(1024..65535)
+  context "integration test" do
+    let(:host) { "127.0.0.1" }
+    let(:port) do
+      socket, address, port = Flores::Random.tcp_listener
+      socket.close
+      port
+    end
 
-      conf = <<-CONFIG
-        input {
-          log4j {
-            mode => "server"
-            port => #{port}
-          }
-        }
-      CONFIG
-      p conf
+    let(:config) do
+      {
+        "host" => host,
+        "port" => port
+      }
+    end
 
-      p "before pipeline"
-      events = input(conf) do |pipeline, queue|
+    subject { LogStash::Inputs::Log4j.new(config) }
 
-        p "before socket"
-        socket = Stud::try(5.times) { TCPSocket.new("127.0.0.1", port) }
-        data = File.binread("testdata/log4j.capture")
-        socket.puts(data)
-        socket.flush
-        socket.close
+    before do
+      subject.register
+    end
 
-        p "before collect"
-        static = Timeout::timeout(5) {
-          1.times.collect { queue.pop }
+    let(:thread) do
+      Thread.new { subject.run(queue) }
+    end
+
+    let(:queue) do
+      []
+    end
+
+    let(:client) do
+      Stud.try(5.times) { TCPSocket.new(host, port) }
+    end
+
+    after do
+      subject.do_stop
+
+      10.times do 
+        break unless thread.alive?
+        sleep(0.1)
+      end
+      expect(thread).not_to be_alive
+    end
+
+    shared_examples "accept events from the network" do |fixture|
+      before do
+        thread  # make the thread run
+        File.open(fixture, "rb") do |payload|
+          IO.copy_stream(payload, client)
+        end
+        client.close
+
+        Stud.try(5.times) do
+          throw StandardError.new("queue was empty, no data?") if queue.empty?
+        end
+        expect(queue.size).to be == 1
+      end
+
+      it "should accept an event from the network" do
+        event = queue.first
+        expect(event.get("message")).to be == "Hello world"
+      end
+    end
+
+    context "default behavior" do
+      include_examples "accept events from the network", "spec/fixtures/log4j.payload"
+    end
+
+    context "with proxy enabled" do
+      let(:config) do
+        {
+          "host" => host,
+          "port" => port,
+          "proxy_protocol" => true
         }
       end
-      p "after pipeline"
 
-      p "after loop"
-      insist { events.length } == 1 
-      insist { events[0].get("logger_name") } == "sender"
+      before do
+        client.write("PROXY TCP4 1.2.3.4 5.6.7.8 1234 5678\r\n")
+      end
+
+      include_examples "accept events from the network", "spec/fixtures/log4j.payload" do
+        it "should set proxy_host and proxy_port" do
+          event = queue.first
+          expect(event.get("host")).to be == "1.2.3.4"
+        end
+      end
     end
   end
 end
