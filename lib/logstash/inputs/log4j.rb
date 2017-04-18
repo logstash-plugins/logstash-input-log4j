@@ -61,8 +61,6 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   public
   def register
-    require "java"
-    require "jruby/serialization"
 
     begin
       Java::OrgApacheLog4jSpi.const_get("LoggingEvent")
@@ -143,8 +141,7 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   private
   def socket_to_inputstream(socket)
-    # JRubyObjectInputStream uses JRuby class path to find the class to de-serialize to
-    JRubyObjectInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
+     Log4jInputStream.new(java.io.BufferedInputStream.new(socket.to_inputstream))
   end
 
   private
@@ -196,5 +193,24 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   def add_socket_mixin(socket)
     socket.instance_eval { class << self; include ::LogStash::Util::SocketPeer end }
+  end
+
+  class Log4jInputStream < java.io.ObjectInputStream
+    ALLOWED_CLASSES = ["org.apache.log4j.spi.LoggingEvent"]
+
+    def initialize(*args)
+      super
+      @class_loader = org.jruby.Ruby.getGlobalRuntime.getJRubyClassLoader 
+    end
+
+    def safety_check(name)
+      raise java.io.InvalidObjectException.new("Object type #{name} is not allowed.") if !ALLOWED_CLASSES.include?(name)
+    end
+
+    def resolveClass(desc)
+      name = desc.getName
+      safety_check(name)
+      java.lang.Class.forName(name, false, @class_loader)
+    end
   end
 end # class LogStash::Inputs::Log4j

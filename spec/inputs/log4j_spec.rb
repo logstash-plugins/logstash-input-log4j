@@ -8,6 +8,9 @@ require "stud/task"
 require 'timeout'
 require "flores/random"
 
+# Uncomment to enable higher level logging if needed during testing.
+#LogStash::Logging::Logger::configure_logging("DEBUG")
+
 describe LogStash::Inputs::Log4j do
 
   it "should register" do
@@ -175,6 +178,23 @@ describe LogStash::Inputs::Log4j do
           expect(event.get("host")).to be == "1.2.3.4"
         end
       end
+    end
+  end
+
+  context "for safety" do
+    let(:input) { java.lang.Integer.new(Flores::Random.integer(0..1000)) }
+    let(:baos) { java.io.ByteArrayOutputStream.new }
+    let(:oos) { java.io.ObjectOutputStream.new(baos) }
+    let(:data) {
+      oos.writeObject(input)
+      baos.toByteArray()
+    }
+
+    let(:bais) { java.io.ByteArrayInputStream.new(data) }
+    let(:ois) { LogStash::Inputs::Log4j::Log4jInputStream.new(bais) }
+
+    it "should reject non-log4j objects" do
+      expect { ois.readObject }.to raise_error(java.io.InvalidObjectException)
     end
   end
 end

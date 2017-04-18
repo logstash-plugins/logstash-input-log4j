@@ -1,3 +1,6 @@
+## 3.0.4
+  - This input will now reject any non-log4j log objects sent as input.
+
 ## 3.0.3
   - `data_timeout` is now marked as obsolete, since this option is no longer necessary
 
