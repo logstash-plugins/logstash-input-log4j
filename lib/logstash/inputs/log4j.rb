@@ -8,6 +8,9 @@ require "socket"
 require "timeout"
 require 'logstash-input-log4j_jars'
 
+# DEPRECATION NOTICE
+# ==================
+#
 # NOTE: This plugin is deprecated. It is recommended that you use filebeat to collect logs from log4j.
 #
 # The following section is a guide for how to migrate from SocketAppender to use filebeat.
@@ -18,52 +21,62 @@ require 'logstash-input-log4j_jars'
 # 2) Install and configure filebeat to collect those logs and ship them to Logstash
 # 3) Configure Logstash to use the beats input.
 #
-#
 # Configuring log4j for writing to local files
 # --------------------------------------------
 # 
-# In your log4j.properties file, where you have SocketAppender, remove SocketAppender and replace it with RollingFileAppender. 
+# In your log4j.properties file, remove SocketAppender and replace it with RollingFileAppender. 
 #
-# For example, you can use this log4j.properties configuration to keep 7 days of logs on disk:
+# For example, you can use the following log4j.properties configuration to write daily log files.
 #
-# # Your app's log4j.properties (log4j 1.2 only)
-# log4j.rootLogger=daily
-# log4j.appender.daily=org.apache.log4j.rolling.RollingFileAppender
-# log4j.appender.daily.RollingPolicy=org.apache.log4j.rolling.TimeBasedRollingPolicy
-# log4j.appender.daily.RollingPolicy.FileNamePattern=/var/log/your-app/app.%d.log
-# log4j.appender.daily.layout = org.apache.log4j.PatternLayout
-# log4j.appender.daily.layout.ConversionPattern=%d{YYYY-MM-dd HH:mm:ss,SSSZ} %p %c{1}:%L - %m%n
+#     # Your app's log4j.properties (log4j 1.2 only)
+#     log4j.rootLogger=daily
+#     log4j.appender.daily=org.apache.log4j.rolling.RollingFileAppender
+#     log4j.appender.daily.RollingPolicy=org.apache.log4j.rolling.TimeBasedRollingPolicy
+#     log4j.appender.daily.RollingPolicy.FileNamePattern=/var/log/your-app/app.%d.log
+#     log4j.appender.daily.layout = org.apache.log4j.PatternLayout
+#     log4j.appender.daily.layout.ConversionPattern=%d{YYYY-MM-dd HH:mm:ss,SSSZ} %p %c{1}:%L - %m%n
 #
+# Configuring log4j.properties in more detail is outside the scope of this migration guide.
 #
 # Configuring filebeat
 # --------------------
 #
-# Next, install and configure filebeat to collect these logs:
+# Next,
+# https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-installation.html[install
+# filebeat]. Based on the above log4j.properties, we can use this filebeat
+# configuration:
 #
-# # filebeat.yml
-# filebeat:
-#   prospectors:
-#     -
-#       paths:
-#         - /var/log/your-app/app.*.log
-#       input_type: log
-# output:
-#   logstash:
-#     hosts: ["your-logstash-host:5000"]
+#     # filebeat.yml
+#     filebeat:
+#       prospectors:
+#         -
+#           paths:
+#             - /var/log/your-app/app.*.log
+#           input_type: log
+#     output:
+#       logstash:
+#         hosts: ["your-logstash-host:5000"]
+#
+# For more details on configuring filebeat, see 
+# https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-configuration.html[the filebeat configuration guide].
 #
 # Configuring Logstash to receive from filebeat
 # ---------------------------------------------
 #
 # Finally, configure Logstash with a beats input:
 #
-# # logstash configuration
-# input {
-#   beats {
-#     port => 5000
-#   }
-# }
+#     # logstash configuration
+#     input {
+#       beats {
+#         port => 5000
+#       }
+#     }
 #
-# It is strongly recommended that you also configure filebeat and logstash beats input to use TLS.
+# It is strongly recommended that you also enable TLS in filebeat and logstash
+# beats input for protection and safety of your log data..
+#
+# For more details on configuring the beats input, see
+# https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html[the logstash beats input documentation].
 
 # ----
 #
