@@ -133,12 +133,13 @@ class LogStash::Inputs::Log4j < LogStash::Inputs::Base
 
   public
   def register
-
     begin
       Java::OrgApacheLog4jSpi.const_get("LoggingEvent")
     rescue
       raise(LogStash::PluginLoadingError, "Log4j java library not loaded")
     end
+
+    @logger.warn("This plugin is deprecated. Please use filebeat instead to collect logs from log4j applications.")
 
     if server?
       @logger.info("Starting Log4j input listener", :address => "#{@host}:#{@port}")
