@@ -8,6 +8,65 @@ require "socket"
 require "timeout"
 require 'logstash-input-log4j_jars'
 
+# NOTE: This plugin is deprecated. It is recommended that you use filebeat to collect logs from log4j.
+#
+# The following section is a guide for how to migrate from SocketAppender to use filebeat.
+#
+# To migrate away from log4j SocketAppender to using filebeat, you will need to make 3 changes:
+#
+# 1) Configure your log4j.properties (in your app) to write to a local file.
+# 2) Install and configure filebeat to collect those logs and ship them to Logstash
+# 3) Configure Logstash to use the beats input.
+#
+#
+# Configuring log4j for writing to local files
+# --------------------------------------------
+# 
+# In your log4j.properties file, where you have SocketAppender, remove SocketAppender and replace it with RollingFileAppender. 
+#
+# For example, you can use this log4j.properties configuration to keep 7 days of logs on disk:
+#
+# # Your app's log4j.properties (log4j 1.2 only)
+# log4j.rootLogger=daily
+# log4j.appender.daily=org.apache.log4j.rolling.RollingFileAppender
+# log4j.appender.daily.RollingPolicy=org.apache.log4j.rolling.TimeBasedRollingPolicy
+# log4j.appender.daily.RollingPolicy.FileNamePattern=/var/log/your-app/app.%d.log
+# log4j.appender.daily.layout = org.apache.log4j.PatternLayout
+# log4j.appender.daily.layout.ConversionPattern=%d{YYYY-MM-dd HH:mm:ss,SSSZ} %p %c{1}:%L - %m%n
+#
+#
+# Configuring filebeat
+# --------------------
+#
+# Next, install and configure filebeat to collect these logs:
+#
+# # filebeat.yml
+# filebeat:
+#   prospectors:
+#     -
+#       paths:
+#         - /var/log/your-app/app.*.log
+#       input_type: log
+# output:
+#   logstash:
+#     hosts: ["your-logstash-host:5000"]
+#
+# Configuring Logstash to receive from filebeat
+# ---------------------------------------------
+#
+# Finally, configure Logstash with a beats input:
+#
+# # logstash configuration
+# input {
+#   beats {
+#     port => 5000
+#   }
+# }
+#
+# It is strongly recommended that you also configure filebeat and logstash beats input to use TLS.
+
+# ----
+#
 # Read events over a TCP socket from a Log4j SocketAppender. This plugin works only with log4j version 1.x.
 #
 # Can either accept connections from clients or connect to a server,
