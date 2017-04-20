@@ -1,3 +1,6 @@
+## 3.0.5
+  - Added deprecation notice in logs.
+
 ## 3.0.4
   - This input will now reject any non-log4j log objects sent as input.
 
