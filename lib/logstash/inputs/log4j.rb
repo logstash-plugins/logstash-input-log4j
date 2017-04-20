@@ -8,8 +8,7 @@ require "socket"
 require "timeout"
 require 'logstash-input-log4j_jars'
 
-# DEPRECATION NOTICE
-# ==================
+# ==== Deprecation Notice
 #
 # NOTE: This plugin is deprecated. It is recommended that you use filebeat to collect logs from log4j.
 #
@@ -21,8 +20,7 @@ require 'logstash-input-log4j_jars'
 # 2) Install and configure filebeat to collect those logs and ship them to Logstash
 # 3) Configure Logstash to use the beats input.
 #
-# Configuring log4j for writing to local files
-# --------------------------------------------
+# .Configuring log4j for writing to local files
 # 
 # In your log4j.properties file, remove SocketAppender and replace it with RollingFileAppender. 
 #
@@ -38,8 +36,7 @@ require 'logstash-input-log4j_jars'
 #
 # Configuring log4j.properties in more detail is outside the scope of this migration guide.
 #
-# Configuring filebeat
-# --------------------
+# .Configuring filebeat
 #
 # Next,
 # https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-installation.html[install
@@ -60,8 +57,7 @@ require 'logstash-input-log4j_jars'
 # For more details on configuring filebeat, see 
 # https://www.elastic.co/guide/en/beats/filebeat/current/filebeat-configuration.html[the filebeat configuration guide].
 #
-# Configuring Logstash to receive from filebeat
-# ---------------------------------------------
+# .Configuring Logstash to receive from filebeat
 #
 # Finally, configure Logstash with a beats input:
 #
@@ -77,8 +73,8 @@ require 'logstash-input-log4j_jars'
 #
 # For more details on configuring the beats input, see
 # https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html[the logstash beats input documentation].
-
-# ----
+#
+# '''
 #
 # Read events over a TCP socket from a Log4j SocketAppender. This plugin works only with log4j version 1.x.
 #
