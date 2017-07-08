@@ -1,3 +1,9 @@
+## 3.0.7
+  - Docs: Moved description label to the correct location in the docs.
+  
+## 3.0.6
+  - Docs: Fix asciidoc formatting.
+
 ## 3.0.5
   - Added deprecation notice in logs.
 

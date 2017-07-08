@@ -18,8 +18,6 @@ END - GENERATED VARIABLES, DO NOT EDIT!
 
 include::{include_path}/plugin_header.asciidoc[]
 
-==== Description
-
 ==== Deprecation Notice
 
 NOTE: This plugin is deprecated. It is recommended that you use filebeat to collect logs from log4j.
@@ -86,7 +84,7 @@ beats input for protection and safety of your log data..
 For more details on configuring the beats input, see
 https://www.elastic.co/guide/en/logstash/current/plugins-inputs-beats.html[the logstash beats input documentation].
 
-'''
+==== Description
 
 Read events over a TCP socket from a Log4j SocketAppender. This plugin works only with log4j version 1.x.
 
