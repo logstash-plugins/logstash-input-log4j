@@ -1,3 +1,6 @@
+## 3.1.0
+  - Remove obsolete option `data_timeout`
+
 ## 3.0.7
   - Docs: Moved description label to the correct location in the docs.
   
