@@ -1,3 +1,6 @@
+## 3.1.1
+  - Fix some documentation issues
+
 ## 3.1.0
   - Remove obsolete option `data_timeout`
 
