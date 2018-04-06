@@ -1,5 +1,6 @@
 :plugin: log4j
 :type: input
+:default_codec: plain
 
 ///////////////////////////////////////////
 START - GENERATED VARIABLES, DO NOT EDIT!
@@ -167,3 +168,5 @@ http://www.haproxy.org/download/1.5/doc/proxy-protocol.txt
 
 [id="plugins-{type}s-{plugin}-common-options"]
 include::{include_path}/{type}.asciidoc[]
+
+:default_codec!:
